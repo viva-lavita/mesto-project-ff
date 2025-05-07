@@ -17,7 +17,7 @@ export const openModal = (modal) => {
   modal.classList.add("popup_is-opened");
   document.addEventListener("keyup", closeModalOnEsc);
   modal.classList.remove('popup_is-animated');
-  document.addEventListener('mousedown', (evt) => closeModalOnOverlay(evt, modal))
+  document.addEventListener('mousedown', closeModalOnOverlay)
 };
 
 export const closeModal = (modal) => {
