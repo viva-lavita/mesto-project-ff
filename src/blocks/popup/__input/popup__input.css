@@ -20,3 +20,20 @@
     line-height: 15px;
   }
 }
+
+.popup__input_type_error {
+  border-bottom: 1px solid #ff0000;
+}
+
+.popup__input-error_active {
+  visibility: visible;
+  font-size: 12px;
+  position: absolute;
+  color: #ff0000;
+  inset-block-start: 145px;
+  inset-inline-start: 36px;
+}
+
+.popup__input-error_active:nth-of-type(2) {
+  inset-block-start: 200px;
+}
