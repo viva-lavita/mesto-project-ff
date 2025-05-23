@@ -1,5 +1,5 @@
 import "./pages/index.css";
-import initialCards from "./components/initial_cards.js";
+import { addNewCard, config, getUserInfo, getInitialCards, setNewAvatar, setUserInfo } from "./components/api.js";
 import { openModal, closeModal } from "./components/modal.js";
 import {
   addCard,
@@ -9,16 +9,35 @@ import {
 } from "./components/card.js";
 import { enableValidation, clearValidation } from "./components/validation.js";
 
+const avatar = document.querySelector(".profile__image");
+const currentUserName = document.querySelector(".profile__title");
+const currentUserDescription = document.querySelector(".profile__description");
+const addCardModal = document.querySelector(".popup_type_new-card");
+const editProfileModal = document.querySelector(".popup_type_edit");
+const imageModal = document.querySelector(".popup_type_image");
+const editProfileAvatarModal = document.querySelector(".popup_type_edit-profile-avatar");
 const addCardButton = document.querySelector(".profile__add-button");
 const editProfileButton = document.querySelector(".profile__edit-button");
 const addCardForm = document.forms["new-place"];
 const profileForm = document.forms["edit-profile"];
-const addCardModal = document.querySelector(".popup_type_new-card");
-const editProfileModal = document.querySelector(".popup_type_edit");
-const imageModal = document.querySelector(".popup_type_image");
+const profileAvatarForm = document.forms["edit-profile-avatar"];
 const closeImageModalButton = imageModal.querySelector(".popup__close");
 const closeProfileModalButton = editProfileModal.querySelector(".popup__close");
 const closeCardModalButton = addCardModal.querySelector(".popup__close");
+const closeProfileAvatarModalButton = editProfileAvatarModal.querySelector(".popup__close");
+let сurrentUserId;
+
+Promise.all([getUserInfo(), getInitialCards()])
+  .then(([user, cards]) => {
+    currentUserName.textContent = user.name;
+    currentUserDescription.textContent = user.about;
+    avatar.style.backgroundImage = `url(${user.avatar})`;
+    сurrentUserId = user._id;
+    renderCards(cards, сurrentUserId);
+  })
+  .catch((err) => {
+    console.log(err);
+  })
 
 const validationConfig = {
   formSelector: '.popup__form',
@@ -34,16 +53,18 @@ const handleAddCardFormSubmit = (evt) => {
   const addCardForm = document.forms["new-place"];
   const placeName = addCardForm.elements["place-name"].value;
   const link = addCardForm.elements.link.value;
-  const newCard = createCardElement(
-    {
-      name: placeName,
-      link: link,
-    },
-    likeCard,
-    deleteCard,
-    clickCardImage
-  );
-  addCard(newCard);
+  addNewCard(placeName, link)
+  .then((card) => {
+    const newCard = createCardElement(
+      card,
+      likeCard,
+      deleteCard,
+      clickCardImage,
+      сurrentUserId
+    );
+    addCard(newCard);
+  })
+  
   addCardForm.reset();
   clearValidation(addCardForm, validationConfig);
   closeModal(addCardModal);
@@ -54,20 +75,31 @@ const handleProfileFormSubmit = (evt) => {
   const profileForm = document.forms["edit-profile"];
   const newName = profileForm.name.value;
   const newDescription = profileForm.description.value;
-  document.querySelector(".profile__title").textContent = newName;
-  document.querySelector(".profile__description").textContent = newDescription;
+  setUserInfo(newName, newDescription).then((user) => {
+    currentUserName.textContent = user.name;
+    currentUserDescription.textContent = user.about;
+  }).catch((err) => console.log(err));
+  profileForm.reset();
   clearValidation(profileForm, validationConfig);
   closeModal(editProfileModal);
 };
 
+const handleProfileAvatarFormSubmit = (evt) => {
+  evt.preventDefault();
+  const newAvatar = profileAvatarForm.link.value;
+  setNewAvatar(newAvatar).then((data) => {
+    console.log(data);
+    avatar.style.backgroundImage = `url(${data.avatar})`;
+  }).catch((err) => console.log(err));
+  profileAvatarForm.reset();
+  clearValidation(profileAvatarForm, validationConfig);
+  closeModal(editProfileAvatarModal);
+};
+
 const openProfileModal = (modal) => {
   clearValidation(profileForm, validationConfig);
-  const currentName = document.querySelector(".profile__title").textContent;
-  const currentDescription = document.querySelector(
-    ".profile__description"
-  ).textContent;
-  profileForm.name.value = currentName;
-  profileForm.description.value = currentDescription;
+  profileForm.name.value = currentUserName.textContent;
+  profileForm.description.value = currentUserDescription.textContent;;
   openModal(modal);
 };
 
@@ -82,13 +114,14 @@ const clickCardImage = (evt) => {
   openModal(imageModal);
 };
 
-const renderCards = (cards) => {
+const renderCards = (cards, userId) => {
   cards.forEach((card) => {
     const newCardElement = createCardElement(
       card,
       likeCard,
       deleteCard,
-      clickCardImage
+      clickCardImage,
+      userId
     );
     addCard(newCardElement);
   });
@@ -102,13 +135,21 @@ addCardButton.addEventListener("click", () => {
 editProfileButton.addEventListener("click", () =>
   openProfileModal(editProfileModal)
 );
-renderCards(initialCards);
+avatar.addEventListener("click", () => {
+  profileAvatarForm.reset();
+  clearValidation(profileAvatarForm, validationConfig);
+  openModal(editProfileAvatarModal);
+});
 addCardForm.addEventListener("submit", handleAddCardFormSubmit);
 profileForm.addEventListener("submit", handleProfileFormSubmit);
+profileAvatarForm.addEventListener("submit", handleProfileAvatarFormSubmit);
 closeImageModalButton.addEventListener("click", () => closeModal(imageModal));
 closeCardModalButton.addEventListener("click", () => closeModal(addCardModal));
 closeProfileModalButton.addEventListener("click", () =>
   closeModal(editProfileModal)
+);
+closeProfileAvatarModalButton.addEventListener("click", () =>
+  closeModal(editProfileAvatarModal)
 );
 
 enableValidation(validationConfig);

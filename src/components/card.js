@@ -1,12 +1,23 @@
+import { deleteCardFromServer } from "./api.js";
+
 export const likeCard = (evt) => {
   evt.target.classList.add("card__like-button_is-active");
 };
 
 export const deleteCard = (evt) => {
-  evt.target.closest(".card").remove();
+  const card = evt.target.closest(".card");
+  deleteCardFromServer(card.id)
+    .then(() => card.remove())
+    .catch((err) => console.log(err));
 };
 
-export const createCardElement = (cardContent, handleLike, handleDelete, handleClickImage) => {
+
+export const addCard = (cardElement) => {
+  const placesList = document.querySelector(".places__list");
+  placesList.prepend(cardElement);
+};
+
+export const createCardElement = (cardContent, handleLike, handleDelete, handleClickImage, userId) => {
   const newCardElement = document
     .querySelector("#card-template")
     .content.querySelector(".card")
@@ -19,15 +30,16 @@ export const createCardElement = (cardContent, handleLike, handleDelete, handleC
   cardImage.src = cardContent.link;
   cardImage.alt = cardContent.name;
   cardTitle.textContent = cardContent.name;
+  newCardElement.setAttribute("id", cardContent._id);
+  newCardElement.dataset.ownerId = cardContent.owner._id;
 
-  cardDeleteButton.addEventListener("click", handleDelete);
-  cardLikeButton.addEventListener("click", handleLike);
   cardImage.addEventListener("click", handleClickImage);
+  cardLikeButton.addEventListener("click", handleLike);
+  if (newCardElement.dataset.ownerId !== userId) {
+    cardDeleteButton.remove();
+  } else {
+    cardDeleteButton.addEventListener("click", handleDelete);
+  }
 
   return newCardElement;
-};
-
-export const addCard = (cardElement) => {
-  const placesList = document.querySelector(".places__list");
-  placesList.prepend(cardElement);
 };
