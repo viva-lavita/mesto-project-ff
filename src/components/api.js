@@ -8,16 +8,17 @@ export const config = {
 
 export const getInitialCards = () => {
   return fetch(`${config.baseUrl}/cards`, { headers: config.headers })
-    .then(
-      (res) => (res.ok ? res.json() : Promise.reject(`Ошибка: ${res.status}`)))
+    .then((res) =>
+      res.ok ? res.json() : Promise.reject(`Ошибка: ${res.status}`)
+    )
     .catch((err) => console.log(err));
 };
 
-
 export const getUserInfo = () => {
   return fetch(`${config.baseUrl}/users/me`, { headers: config.headers })
-    .then(
-      (res) => (res.ok ? res.json() : Promise.reject(`Ошибка: ${res.status}`)))
+    .then((res) =>
+      res.ok ? res.json() : Promise.reject(`Ошибка: ${res.status}`)
+    )
     .catch((err) => console.log(err));
 };
 
@@ -30,8 +31,9 @@ export const setUserInfo = (name, about) => {
       about: about,
     }),
   })
-    .then(
-      (res) => (res.ok ? res.json() : Promise.reject(`Ошибка: ${res.status}`)))
+    .then((res) =>
+      res.ok ? res.json() : Promise.reject(`Ошибка: ${res.status}`)
+    )
     .catch((err) => console.log(err));
 };
 
@@ -43,8 +45,9 @@ export const setNewAvatar = (avatarLink) => {
       avatar: avatarLink,
     }),
   })
-    .then(
-      (res) => (res.ok ? res.json() : Promise.reject(`Ошибка: ${res.status}`)))
+    .then((res) =>
+      res.ok ? res.json() : Promise.reject(`Ошибка: ${res.status}`)
+    )
     .catch((err) => console.log(err));
 };
 
@@ -57,8 +60,9 @@ export const addNewCard = (cardName, cardLink) => {
       link: cardLink,
     }),
   })
-    .then(
-      (res) => (res.ok ? res.json() : Promise.reject(`Ошибка: ${res.status}`)))
+    .then((res) =>
+      res.ok ? res.json() : Promise.reject(`Ошибка: ${res.status}`)
+    )
     .catch((err) => console.log(err));
 };
 
@@ -67,7 +71,30 @@ export const deleteCardFromServer = (cardId) => {
     method: "DELETE",
     headers: config.headers,
   })
-    .then(
-      (res) => (res.ok ? res.json() : Promise.reject(`Ошибка: ${res.status}`)))
+    .then((res) =>
+      res.ok ? res.json() : Promise.reject(`Ошибка: ${res.status}`)
+    )
+    .catch((err) => console.log(err));
+};
+
+export const likeCardFromServer = (cardId) => {
+  return fetch(`${config.baseUrl}/cards/likes/${cardId}`, {
+    method: "PUT",
+    headers: config.headers,
+  })
+    .then((res) =>
+      res.ok ? res.json() : Promise.reject(`Ошибка: ${res.status}`)
+    )
+    .catch((err) => console.log(err));
+};
+
+export const unlikeCardFromServer = (cardId) => {
+  return fetch(`${config.baseUrl}/cards/likes/${cardId}`, {
+    method: "DELETE",
+    headers: config.headers,
+  })
+    .then((res) =>
+      res.ok ? res.json() : Promise.reject(`Ошибка: ${res.status}`)
+    )
     .catch((err) => console.log(err));
 };
