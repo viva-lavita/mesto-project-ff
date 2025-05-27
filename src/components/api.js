@@ -6,20 +6,23 @@ export const config = {
   },
 };
 
+const checkResponse = (res) => {
+  if (res.ok) {
+    return res.json();
+  }
+  return Promise.reject(`Ошибка: ${res.status}`);
+};
+
 export const getInitialCards = () => {
-  return fetch(`${config.baseUrl}/cards`, { headers: config.headers })
-    .then((res) =>
-      res.ok ? res.json() : Promise.reject(`Ошибка: ${res.status}`)
-    )
-    .catch((err) => console.log(err));
+  return fetch(`${config.baseUrl}/cards`, { headers: config.headers }).then(
+    (res) => checkResponse(res)
+  );
 };
 
 export const getUserInfo = () => {
-  return fetch(`${config.baseUrl}/users/me`, { headers: config.headers })
-    .then((res) =>
-      res.ok ? res.json() : Promise.reject(`Ошибка: ${res.status}`)
-    )
-    .catch((err) => console.log(err));
+  return fetch(`${config.baseUrl}/users/me`, { headers: config.headers }).then(
+    (res) => checkResponse(res)
+  );
 };
 
 export const setUserInfo = (name, about) => {
@@ -30,11 +33,7 @@ export const setUserInfo = (name, about) => {
       name: name,
       about: about,
     }),
-  })
-    .then((res) =>
-      res.ok ? res.json() : Promise.reject(`Ошибка: ${res.status}`)
-    )
-    .catch((err) => console.log(err));
+  }).then((res) => checkResponse(res));
 };
 
 export const setNewAvatar = (avatarLink) => {
@@ -44,11 +43,7 @@ export const setNewAvatar = (avatarLink) => {
     body: JSON.stringify({
       avatar: avatarLink,
     }),
-  })
-    .then((res) =>
-      res.ok ? res.json() : Promise.reject(`Ошибка: ${res.status}`)
-    )
-    .catch((err) => console.log(err));
+  }).then((res) => checkResponse(res));
 };
 
 export const addNewCard = (cardName, cardLink) => {
@@ -59,42 +54,26 @@ export const addNewCard = (cardName, cardLink) => {
       name: cardName,
       link: cardLink,
     }),
-  })
-    .then((res) =>
-      res.ok ? res.json() : Promise.reject(`Ошибка: ${res.status}`)
-    )
-    .catch((err) => console.log(err));
+  }).then((res) => checkResponse(res));
 };
 
 export const deleteCardFromServer = (cardId) => {
   return fetch(`${config.baseUrl}/cards/${cardId}`, {
     method: "DELETE",
     headers: config.headers,
-  })
-    .then((res) =>
-      res.ok ? res.json() : Promise.reject(`Ошибка: ${res.status}`)
-    )
-    .catch((err) => console.log(err));
+  }).then((res) => checkResponse(res));
 };
 
 export const likeCardFromServer = (cardId) => {
   return fetch(`${config.baseUrl}/cards/likes/${cardId}`, {
     method: "PUT",
     headers: config.headers,
-  })
-    .then((res) =>
-      res.ok ? res.json() : Promise.reject(`Ошибка: ${res.status}`)
-    )
-    .catch((err) => console.log(err));
+  }).then((res) => checkResponse(res));
 };
 
 export const unlikeCardFromServer = (cardId) => {
   return fetch(`${config.baseUrl}/cards/likes/${cardId}`, {
     method: "DELETE",
     headers: config.headers,
-  })
-    .then((res) =>
-      res.ok ? res.json() : Promise.reject(`Ошибка: ${res.status}`)
-    )
-    .catch((err) => console.log(err));
+  }).then((res) => checkResponse(res));
 };

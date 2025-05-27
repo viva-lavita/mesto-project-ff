@@ -1,19 +1,14 @@
 import "./pages/index.css";
 import {
   addNewCard,
-  config,
   getUserInfo,
   getInitialCards,
   setNewAvatar,
   setUserInfo,
+  deleteCardFromServer,
 } from "./components/api.js";
 import { openModal, closeModal } from "./components/modal.js";
-import {
-  addCard,
-  deleteCard,
-  likeCard,
-  createCardElement,
-} from "./components/card.js";
+import { likeCard, createCardElement } from "./components/card.js";
 import { enableValidation, clearValidation } from "./components/validation.js";
 
 const avatar = document.querySelector(".profile__image");
@@ -31,15 +26,24 @@ const editProfileButton = document.querySelector(".profile__edit-button");
 const addCardForm = document.forms["new-place"];
 const profileForm = document.forms["edit-profile"];
 const profileAvatarForm = document.forms["edit-profile-avatar"];
+const confirmDeleteCardForm = document.forms["confirm-delete"];
 const closeImageModalButton = imageModal.querySelector(".popup__close");
 const closeProfileModalButton = editProfileModal.querySelector(".popup__close");
 const closeCardModalButton = addCardModal.querySelector(".popup__close");
 const closeProfileAvatarModalButton =
   editProfileAvatarModal.querySelector(".popup__close");
-const closeConfirmDeleteModalButton = document
-  .querySelector(".popup_type_confirm-delete")
-  .querySelector(".popup__close");
+const closeConfirmDeleteModalButton =
+  confirmDeleteModal.querySelector(".popup__close");
+const addCardModalButton = addCardModal.querySelector(".popup__button");
+const editProfileModalButton = editProfileModal.querySelector(".popup__button");
+const editProfileAvatarModalButton =
+  editProfileAvatarModal.querySelector(".popup__button");
+const baseSaveButtonText = "Сохранить";
+const LoadingButtonText = "Сохранение...";
+const placesList = document.querySelector(".places__list");
 let сurrentUserId;
+let deletedCardId;
+let deletedCardElement;
 
 Promise.all([getUserInfo(), getInitialCards()])
   .then(([user, cards]) => {
@@ -59,35 +63,51 @@ const validationConfig = {
   submitButtonSelector: ".popup__button",
   inactiveButtonClass: "popup__button_disabled",
   inputErrorClass: "popup__input_type_error",
+  inputErrorActiveClass: "popup__input-error_active",
   errorClass: "popup__error_visible",
+};
+
+const renderLoadingButton = (
+  button,
+  isLoading,
+  baseText = baseSaveButtonText,
+  loadingText = LoadingButtonText
+) => {
+  if (isLoading) {
+    button.textContent = loadingText;
+  } else {
+    button.textContent = baseText;
+  }
+};
+
+const addCard = (cardElement) => {
+  placesList.prepend(cardElement);
 };
 
 const handleAddCardFormSubmit = (evt) => {
   evt.preventDefault();
-  const addCardForm = document.forms["new-place"];
   const placeName = addCardForm.elements["place-name"].value;
   const link = addCardForm.elements.link.value;
-  const button = addCardForm.querySelector(".popup__button");
-  button.textContent = "Сохранение...";
+  renderLoadingButton(addCardModalButton, true);
   addNewCard(placeName, link)
     .then((card) => {
       const newCard = createCardElement(
         card,
         likeCard,
-        deleteCard,
+        openDeleteCardModal,
         clickCardImage,
         сurrentUserId
       );
       addCard(newCard);
     })
+    .then(() => {
+      addCardForm.reset();
+      closeModal(addCardModal);
+    })
     .catch((err) => console.log(err))
     .finally(() => {
-      button.textContent = "Сохранить";
+      renderLoadingButton(addCardModalButton, false);
     });
-
-  addCardForm.reset();
-  clearValidation(addCardForm, validationConfig);
-  closeModal(addCardModal);
 };
 
 const handleProfileFormSubmit = (evt) => {
@@ -95,38 +115,38 @@ const handleProfileFormSubmit = (evt) => {
   const profileForm = document.forms["edit-profile"];
   const newName = profileForm.name.value;
   const newDescription = profileForm.description.value;
-  const button = profileForm.querySelector(".popup__button");
-  button.textContent = "Сохранение...";
+  renderLoadingButton(editProfileModalButton, true);
   setUserInfo(newName, newDescription)
     .then((user) => {
       currentUserName.textContent = user.name;
       currentUserDescription.textContent = user.about;
     })
+    .then(() => {
+      profileForm.reset();
+      closeModal(editProfileModal);
+    })
     .catch((err) => console.log(err))
     .finally(() => {
-      button.textContent = "Сохранить";
+      renderLoadingButton(editProfileModalButton, false);
     });
-  profileForm.reset();
-  clearValidation(profileForm, validationConfig);
-  closeModal(editProfileModal);
 };
 
 const handleProfileAvatarFormSubmit = (evt) => {
   evt.preventDefault();
   const newAvatar = profileAvatarForm.link.value;
-  const button = profileAvatarForm.querySelector(".popup__button");
-  button.textContent = "Сохранение...";
+  renderLoadingButton(editProfileAvatarModalButton, true);
   setNewAvatar(newAvatar)
     .then((data) => {
       avatar.style.backgroundImage = `url(${data.avatar})`;
     })
+    .then(() => {
+      profileAvatarForm.reset();
+      closeModal(editProfileAvatarModal);
+    })
     .catch((err) => console.log(err))
     .finally(() => {
-      button.textContent = "Сохранить";
+      renderLoadingButton(editProfileAvatarModalButton, false);
     });
-  profileAvatarForm.reset();
-  clearValidation(profileAvatarForm, validationConfig);
-  closeModal(editProfileAvatarModal);
 };
 
 const openProfileModal = (modal) => {
@@ -147,12 +167,30 @@ const clickCardImage = (evt) => {
   openModal(imageModal);
 };
 
+const openDeleteCardModal = (cardElement) => {
+  openModal(confirmDeleteModal);
+  deletedCardId = cardElement.id;
+  deletedCardElement = cardElement;
+};
+
+const deleteCardModalSubmit = (evt) => {
+  evt.preventDefault();
+  deleteCardFromServer(deletedCardId)
+    .then(() => {
+      deletedCardElement.remove();
+      closeModal(confirmDeleteModal);
+      deletedCardId = null;
+      deletedCardElement = null;
+    })
+    .catch((err) => console.log(err));
+};
+
 const renderCards = (cards, userId) => {
   cards.reverse().forEach((card) => {
     const newCardElement = createCardElement(
       card,
       likeCard,
-      deleteCard,
+      openDeleteCardModal,
       clickCardImage,
       userId
     );
@@ -161,7 +199,6 @@ const renderCards = (cards, userId) => {
 };
 
 addCardButton.addEventListener("click", () => {
-  addCardForm.reset();
   clearValidation(addCardForm, validationConfig);
   openModal(addCardModal);
 });
@@ -169,7 +206,6 @@ editProfileButton.addEventListener("click", () =>
   openProfileModal(editProfileModal)
 );
 avatar.addEventListener("click", () => {
-  profileAvatarForm.reset();
   clearValidation(profileAvatarForm, validationConfig);
   openModal(editProfileAvatarModal);
 });
@@ -187,5 +223,6 @@ closeProfileAvatarModalButton.addEventListener("click", () =>
 closeConfirmDeleteModalButton.addEventListener("click", () =>
   closeModal(confirmDeleteModal)
 );
+confirmDeleteCardForm.addEventListener("submit", deleteCardModalSubmit);
 
 enableValidation(validationConfig);
